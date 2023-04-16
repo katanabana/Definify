@@ -1,0 +1,11 @@
+body {
+background: #1f1f2e;
+color: white;
+min-width: 100vw;
+min-height: 100vh;
+}
+
+body * {
+font-family: 'Varela Round';
+font-weight: 1000;
+}

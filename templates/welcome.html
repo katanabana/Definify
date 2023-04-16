@@ -1,0 +1,268 @@
+{% from "helpers.html" import get_errors %}
+{% extends "base.html" %}
+{% block links %}
+<link href="{{ url_for_css('welcome.css') }}" rel="stylesheet">
+<style>
+.pfp::-webkit-file-upload-button {
+    background-image: url('{{ url_for_img(pfp) }}')
+}
+
+
+
+
+
+
+
+
+
+
+
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for_js('welcome.js') }}"></script>
+{% if not sign_up_form.validate() and sign_up_form.is_submitted() %}
+<script>
+var myModal = new bootstrap.Modal(document.getElementById('signUpModal'), {})
+myModal.show()
+
+
+
+
+
+
+
+
+
+
+
+</script>
+{% elif not sign_in_form.validate() and sign_in_form.is_submitted() %}
+<script>
+var myModal = new bootstrap.Modal(document.getElementById('signInModal'), {})
+myModal.show()
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+{% endif %}
+<script>
+async function postWithNickname(event) {
+    event.preventDefault();
+    var data = new FormData(event.target);
+    var additionalData = new FormData(document.getElementById('nickname-form'));
+    additionalData.forEach((value, key) => (data.append(key, value)));
+    var submitName = $("input[type=submit]", event.target).attr('name');
+    data.append(submitName, true);
+
+    const response = await fetch(document.location.href, {method: 'POST', body: data});
+    if (response.redirected)
+      window.location.href = response.url;
+    else
+        response.text().then((text) => {document.documentElement.innerHTML = text});
+
+};
+$( "#join" ).submit(postWithNickname);
+$( "#create" ).submit(postWithNickname);
+
+
+
+
+
+
+
+</script>
+{% endblock %}
+{% block content %}
+
+<!-- Navigation-->
+<a class="menu-toggle rounded" href="#"
+   style='background-image: url("{{ url_for_img("menu.png") }}")'>
+    <i class="fas fa-bars"></i>
+</a>
+<nav id="sidebar-wrapper">
+    <ul class="sidebar-nav">
+        <li class="sidebar-nav-item"><a href="#page-top">Home</a></li>
+        <li class="sidebar-nav-item"><a href="#about">About</a></li>
+        <li class="sidebar-nav-item"><a href="#profile">Profile</a></li>
+    </ul>
+</nav>
+<!-- Header-->
+<header class="content-section d-flex justify-content-center flex-column">
+    <div class="container px-5">
+        <div class="d-flex justify-content-center">
+            <div class="col px-5 d-flex flex-column justify-content-center w-50">
+                <div class="row d-flex justify-content-center p-4 h-100 w-100">
+                    <form method="post" action="/set_pfp" enctype="multipart/form-data" class="h-100 w-100"
+                          name="pfp_form">
+                        {{ pfp_form.hidden_tag() }}
+                        {{ pfp_form.file(class="pfp h-100 w-100", onchange="pfp_form.submit()") }}
+                    </form>
+                </div>
+                <div class="row d-flex justify-content-center p-4">
+                    <form method="post" id="nickname-form">
+                        {{ nickname_form.hidden_tag() }}
+                        {{ nickname_form.nickname(
+                        class="form-control rounded-pill",
+                        placeholder="Enter your nickname",
+                        value=user.nickname
+                        ) }}
+                        {{ get_errors(nickname_form.nickname.errors) }}
+                    </form>
+                </div>
+            </div>
+            <div class="col px-5 d-flex flex-column justify-content-center w-50">
+                <div class="row d-flex justify-content-center p-4">
+                    <p class="text-center xh">{{ NAME }}</p>
+                </div>
+                <form method="post" class="row d-flex justify-content-center" id="create">
+                    {{ create_form.hidden_tag() }}
+                    {{ create_form.create(class="btn rounded-pill btn-secondary m-4") }}
+                    {{ get_errors(create_form.create.errors) }}
+                </form>
+                <form method="post" class="row d-flex justify-content-center" id="join">
+                    {{ join_form.hidden_tag() }}
+                    {{ join_form.join(class="btn rounded-pill btn-secondary m-4") }}
+                    {{ get_errors(join_form.join.errors) }}
+                    {{ join_form.url(class="form-control rounded-pill m-4", value=link, placeholder="Enter the link")
+                    }}
+                    {{ get_errors(join_form.url.errors) }}
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- About-->
+<section class="content-section d-flex justify-content-center flex-column" id="about">
+    <div class="container px-4 px-lg-5 text-center">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-lg-10">
+                <h2>What is {{ NAME }}?</h2>
+                <p class="lead mb-5">
+                    {{ NAME }} is a game.
+                </p>
+                <h2>Rules</h2>
+                <p class="lead mb-5">
+                    Don't cheat.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Profile -->
+<section class="content-section d-flex justify-content-center flex-column" id="profile">
+    <div class="container px-4 px-lg-5 text-center">
+        <div class="row gx-4 gx-lg-5 justify-content-center">
+            <div class="col-lg-10">
+
+                <button type="button" class="btn rounded-pill btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#signUpModal">
+                    Sign up
+                </button>
+                <button type="button" class="btn rounded-pill btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#signInModal">
+                    Sign in
+                </button>
+                <a class="btn rounded-pill btn-secondary">Log out</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Forms -->
+<!-- Sign Up -->
+<div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: gray">
+            <form method="post">
+                <div class="modal-header">
+                    <h1 class="modal-title" id="signUpModalLabel">Enter following data to sign up</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    {{ sign_up_form.hidden_tag() }}
+
+                    <div>
+                        {{ sign_up_form.username.label() }}
+                        {{ sign_up_form.username(class='form-control rounded-pill') }}
+                        {{ get_errors(sign_up_form.username.errors) }}
+                    </div>
+
+                    <div>
+                        {{ sign_up_form.email.label() }}
+                        {{ sign_up_form.email(class='form-control rounded-pill') }}
+                        {{ get_errors(sign_up_form.email.errors) }}
+                    </div>
+
+                    <div>
+                        {{ sign_up_form.password.label() }}
+                        {{ sign_up_form.password(class='form-control rounded-pill') }}
+                        {{ get_errors(sign_up_form.password.errors) }}
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    {{ sign_up_form.submit(class='btn btn-secondary rounded-pill') }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Sign In -->
+<div class="modal fade" id="signInModal" tabindex="-1" aria-labelledby="signInModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: gray">
+            <form method="post">
+                <div class="modal-header">
+                    <h1 class="modal-title" id="signInModalLabel">Enter following data to sign in</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    {{ sign_in_form.hidden_tag() }}
+
+                    <div>
+                        {{ sign_in_form.email.label() }}
+                        {{ sign_in_form.email(class='form-control rounded-pill') }}
+                        {{ get_errors(sign_in_form.email.errors) }}
+                    </div>
+
+                    <div>
+                        {{ sign_in_form.password.label() }}
+                        {{ sign_in_form.password(class='form-control rounded-pill') }}
+                        {{ get_errors(sign_in_form.password.errors) }}
+                    </div>
+
+                    <div>
+                        {{ sign_in_form.remember.label() }}
+                        {{ sign_in_form.remember(class='checkbox') }}
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    {{ sign_in_form.submit(class='btn btn-secondary rounded-pill') }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

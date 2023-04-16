@@ -1,0 +1,89 @@
+{% from 'helpers.html' import get_team, get_user with context %}
+{% from 'match.js' import get_script with context %}
+
+{% extends 'base.html' %}
+
+{% block links %}
+<link href="{{ url_for_css('match.css') }}" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block scripts %}
+{{ get_script() }}
+{% endblock %}
+{% block content %}
+<div class="container-fluid d-flex flex-grow-1">
+    <div class="left d-flex flex-column border">
+        <div class="spectators d-flex flex-column flex-grow-1 border">
+            <div class="flex-grow-1 section" id="spectators">
+
+                Spectators:
+                <div class="members">
+                    {% for spectator in room.spectators %}
+                    {{ get_user(spectator.nickname, spectator.id) }}
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+        <div class="progress_ border">
+
+            Progress:
+
+        </div>
+    </div>
+    <div class="right d-flex flex-column border">
+        <div class="teams d-flex flex-column border">
+
+            Teams:
+            <div class="d-flex flex-wrap teams border flex-grow-1" id="teams">
+                {% for team in teams %}
+                {{ get_team(team.name, team.member_nicknames, team.id) }}
+                {% endfor %}
+                <div class="section team add-team m-2 border" id="add-team">
+                </div>
+            </div>
+
+        </div>
+        <div class="state border">
+
+            State:
+            {% if started %}
+            {% if in_progress %}
+            <div class="border">
+                <div class="border d-flex">
+                    <img src="{{ url_for_img(speaker.pfp) }}" width="10%">
+                    <h3>{{ speaker.name }}</h3>
+                    {% if user not in current_team.members or user == speaker %}
+                    <h4>is trying to describe:</h4>
+                    <h1>{{word}}</h1>
+                    {% endif %}
+                </div>
+                <div class="col border">
+                    <h5>Guesses:</h5>
+                    {% for guess in guesses %}
+                    <div class="input-group ">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">{{ guess.sender.name }}</span>
+                        </div>
+                        <input class="form-control" placeholder="{{ guess.text }}" disabled>
+                    </div>
+                    {% endfor %}
+                    {% if user in current_team.members and user != speaker %}
+                    <input class="form-control" placeholder="Enter your guess">
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <h2>Waiting for {{ speaker.name }} to start round...</h2>
+            {% endif %}
+            {% else %}
+            <h2>Waiting for the start...</h2>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

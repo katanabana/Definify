@@ -1,0 +1,28 @@
+{% macro get_errors(errors) %}
+{% if errors %}
+<ul class=errors>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endmacro %}
+
+{% macro get_team(team_name) %}
+<div class="team m-2 border flex-grow-1 section" onclick="emitMoveToTeam()">
+    <h4 class="team-name">{{team_name}}</h4>
+    <div class="members d-flex flex-grow-1">
+    </div>
+</div>
+{% endmacro %}
+
+{% macro get_user(nickname, id) %}
+<div id="{{ id }}">
+    <div class="d-flex align-content-center align-text-center">
+        <h6>{{ nickname }}</h6>
+        {% if room.master.id == id %}
+        <img src="{{ url_for_img('crown.png') }}" class="role">
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

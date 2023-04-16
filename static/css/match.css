@@ -1,0 +1,46 @@
+body {
+min-height: 98vh;
+display: flex;
+}
+
+.left {
+flex-grow: 1;
+}
+.right {
+flex-grow: 3;
+}
+.spectators {
+flex-grow: 1;
+}
+.progress_ {
+flex-grow: 1;
+}
+.teams {
+flex-grow: 3;
+}
+.state {
+flex-grow: 1;
+}
+.add-team {
+background-image: url('/static/img/add.png');
+background-repeat: no-repeat;
+background-position: center;
+background-size: contain;
+background-origin: content-box;
+max-content: 50% 50%;
+}
+
+.team {
+flex: 1 1 21%;
+min-width: 21%;
+min-height: 20vh;
+}
+
+.section {
+cursor: pointer;
+}
+
+.role {
+height: 2.5vh;
+padding-left: 1vh;
+}

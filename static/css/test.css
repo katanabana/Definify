@@ -1,0 +1,26 @@
+.teams {
+border-style: solid;
+padding: 10px;
+max-width: 50%;
+min-height: 700px;
+}
+
+.team {
+background: pink;
+
+/* ------ */
+min-width: 25%;
+padding-top: 25%;
+/* ------ */
+}
+
+
+.teams * {
+border-style: solid;
+padding: 10px;
+
+/* ------ */
+word-break: break-all;
+/* ------ */
+}
+
