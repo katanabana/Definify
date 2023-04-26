@@ -1,12 +1,15 @@
+from flask import request
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileRequired, FileField
 from wtforms import StringField, PasswordField, SubmitField, EmailField, BooleanField
 from wtforms.validators import DataRequired, ValidationError
 
+from constants import HOST, PORT, ALLOWED_EXTENSIONS
 from data.db_session import create_session
 from data.users import User
 from global_ import rooms
+from helpers import get_extension
 
 
 class MyForm(FlaskForm):
@@ -65,41 +68,44 @@ class SignInForm(MyForm):
         # if user doesn't exist no password error will be raised
 
 
-class PfpForm(MyForm):
-    file = FileField([FileRequired()])
+def url_validator(_, link):
+    if link.data:
+        parts = link.data.split('/')
+        if len(parts) == 3 and parts[0] in [f'{HOST}:{PORT}', ''] and parts[1] == 'match':
+            if parts[-1] in rooms:
+                return
+            raise ValidationError('There is no such room.')
+        raise ValidationError('Link is not valid.')
+    raise ValidationError('Enter the link to join the room.')
 
 
-class JoinForm(MyForm):
-    join = SubmitField('Join')
-    url = StringField()
-
-    def validate_url(self, link):
-        if link.data:
-            parts = link.data.split('/')
-            if len(parts) == 3 and parts[0] == '' and parts[1] == 'match':
-                if parts[-1] in rooms:
-                    return
-                raise ValidationError('There is no such room.')
-            raise ValidationError('Link is not valid.')
-        raise ValidationError('Enter the link to join the room.')
-
-
-class CreateForm(MyForm):
-    create = SubmitField('Create')
-
-    def validate_create(self, _):
-        if current_user.nickname:
+def pfp_validator(_, pfp_field):
+    file = pfp_field.data
+    # check if the post request has the file part
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if file and file.filename:
+        if get_extension(file) in ALLOWED_EXTENSIONS:
             return
-        raise ValidationError('Enter your nickname to create room.')
+        raise ValidationError('File has an extension that is not allowed.')
+    raise ValidationError('Choose a file to set it as the profile picture.')
 
 
 class NicknameForm(FlaskForm):
-    nickname = StringField()
-
-    def validate_nickname(self, action):
-        if current_user.nickname:
-            pass
-        raise ValidationError(f'Enter your nickname to {self.action} the room.')
+    nickname = StringField(validators=[DataRequired('Enter your nickname to enter the room.')])
 
 
+class EnterRoomForm(NicknameForm):
+    join = SubmitField('Join')
+    create = SubmitField('Create')
+    url = StringField()
+    pfp = FileField()
 
+    def validate_on_set_pfp(self):
+        return self.validate({'pfp': [pfp_validator]})
+
+    def validate_on_join(self):
+        return self.join.data and self.validate({'url': [url_validator]})
+
+    def validate_on_create(self):
+        return self.create.data and self.validate()

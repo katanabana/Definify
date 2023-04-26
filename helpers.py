@@ -1,6 +1,9 @@
+import os
 import random
 import string
 from flask import url_for, session
+
+from constants import UPLOAD_FOLDER
 
 
 def url_for_static(*path):
@@ -34,9 +37,6 @@ def get_params(additional_params=None, **kwargs):
     return {**common_params, **additional_params, **kwargs}
 
 
-
-
-
 def get_random_word():
     return '<<word>>'
 
@@ -47,3 +47,16 @@ def get_random_string(k=20):
 
 def get_random_color():
     return [random.randint(0, 255) for _ in range(3)]
+
+
+def pfp_exists(pfp):
+    return os.path.exists(get_path_to_pfp(pfp))
+
+
+def get_path_to_pfp(pfp_url):
+    return os.path.join(UPLOAD_FOLDER, pfp_url[1:])
+
+
+def get_extension(file):
+    if '.' in file.filename:
+        return file.filename.rsplit('.', 1)[1].lower()

@@ -1,19 +1,22 @@
-/*!
-* Start Bootstrap - Stylish Portfolio v6.0.6 (https://startbootstrap.com/theme/stylish-portfolio)
-* Copyright 2013-2023 Start Bootstrap
-* Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-stylish-portfolio/blob/master/LICENSE)
-*/
 window.addEventListener('DOMContentLoaded', event => {
 
     const sidebarWrapper = document.getElementById('sidebar-wrapper');
     let scrollToTopVisible = false;
+    var m = true;
     // Closes the sidebar menu
     const menuToggle = document.body.querySelector('.menu-toggle');
     menuToggle.addEventListener('click', event => {
         event.preventDefault();
         sidebarWrapper.classList.toggle('active');
-        _toggleMenuIcon();
         menuToggle.classList.toggle('active');
+        if (m) {
+            document.getElementById("main").style.marginRight = "250px";
+            m = false;
+        }
+        else {
+            document.getElementById("main").style.marginRight = "0px";
+            m = true;
+        }
     })
 
     // Closes responsive menu when a scroll trigger link is clicked
@@ -22,21 +25,14 @@ window.addEventListener('DOMContentLoaded', event => {
         scrollTrigger.addEventListener('click', () => {
             sidebarWrapper.classList.remove('active');
             menuToggle.classList.remove('active');
-            _toggleMenuIcon();
+            document.getElementById("main").style.marginRight = "0px";
         })
     });
 
-    function _toggleMenuIcon() {
-        const menuToggleBars = document.body.querySelector('.menu-toggle > .fa-bars');
-        const menuToggleTimes = document.body.querySelector('.menu-toggle > .fa-xmark');
-        if (menuToggleBars) {
-            menuToggleBars.classList.remove('fa-bars');
-            menuToggleBars.classList.add('fa-xmark');
-        }
-        if (menuToggleTimes) {
-            menuToggleTimes.classList.remove('fa-xmark');
-            menuToggleTimes.classList.add('fa-bars');
-        }
-    }
+
 
 })
+
+document.getElementById("pfp").onchange = function() {
+    document.getElementById("enter-room-form").submit();
+};

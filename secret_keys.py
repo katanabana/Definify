@@ -1,2 +1,0 @@
-APPLICATION_KEY = 'key'
-API_KEY = ''

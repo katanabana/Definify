@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 {% block content %}
-{{ nickname_form.hidden_tag() }}
-{{ nickname_form.nickname() }}
+<form class="d-flex justify-content-center" id="nickname-form" method="post">
+    <div class="d-flex flex-column justify-content-center" style="min-height: 100vh">
+        {{ nickname_form.hidden_tag() }}
+        {{ nickname_form.nickname(
+        class="form-control rounded-pill",
+        placeholder="Enter your nickname",
+        style="max-width: 300px"
+        ) }}
+    </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+    var form = document.getElementById('nickname-form')
+    form.addEventListener('keydown', function(event) {
+        if (event.code === "Enter") {
+            form.submit();
+        }
+    });
+
+
+
+
+
+</script>
 {% endblock %}
