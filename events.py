@@ -10,7 +10,7 @@ class MySocketIO(SocketIO):
             room_id, args = data[0], data[1:]
             if room_id in rooms:
                 room_method(rooms[room_id], *args)
-        self.on_event(room_method.__name__, handler, 'match/<id>')
+        self.on_event(room_method.__name__, handler, namespace='/match/<id_>')
 
 
 def connect_to_events(app):

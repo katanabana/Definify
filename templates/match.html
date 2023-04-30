@@ -13,77 +13,33 @@
 {{ get_script() }}
 {% endblock %}
 {% block content %}
-<div class="d-flex flex-grow-1 pad row-gap" id="main">
-    <div class="left d-flex flex-column col-gap">
+<div class="d-flex flex-column flex-grow-1 pad col-gap" id="main">
+    {% if room.user_is_master() %}
+    <div id="start"></div>
+    {% endif %}
+    <div class="d-flex flex-grow-1 row-gap" id="members">
         <div class="spectators d-flex flex-column flex-grow-1 border" id="spectators">
-
-            Spectators:
+            <p>Spectators:</p>
             <div class="members"></div>
-
         </div>
-        <div class="progress_ border flex-grow-1">
-
-            Progress:
-
+        <div class="right d-flex flex-column col-gap">
+            <div class="teams d-flex flex-column border">
+                <p>Teams:</p>
+                <div class="d-flex flex-wrap teams flex-grow-1" id="teams">
+                    <div class="section team add-team m-2 border" id="add-team"></div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="right d-flex flex-column col-gap">
-        <div class="teams d-flex flex-column border">
-
-            Teams:
-            <div class="d-flex flex-wrap teams flex-grow-1" id="teams">
-                <div class="section team add-team m-2 border" id="add-team"></div>
-            </div>
-
-        </div>
-        <div class="state border">
-
-            <div class="d-flex justify-content-between">
-                <h4>State:</h4>
-                <h6 id="count-down"></h6>
-                {% if room.user_is_master() %}
-                <div class="menu-toggle rounded" style='background-image: url("{{ url_for_img("menu.png") }}")'></div>
-                {% endif %}
-            </div>
-            {% if room.started %}
-            {% if room.running %}
-            <div>
-                <div class="d-flex">
-                    <img src="{{ url_for_img(speaker.pfp) }}" width="10%">
-                    <h3>{{ speaker.name }}</h3>
-                    {% if user not in current_team.members or user == speaker %}
-                    <h4>is trying to describe:</h4>
-                    <h1>{{word}}</h1>
-                    {% endif %}
-                </div>
-                <div class="col">
-                    <h5>Guesses:</h5>
-                    {% for guess in guesses %}
-                    <div class="input-group ">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">{{ guess.sender.name }}</span>
-                        </div>
-                        <input class="form-control" placeholder="{{ guess.text }}" disabled>
-                    </div>
-                    {% endfor %}
-                    {% if user in current_team.members and user != speaker %}
-                    <input class="form-control" placeholder="Enter your guess">
-                    {% endif %}
-                </div>
-            </div>
-            {% else %}
-            <h2>Waiting for {{ speaker.name }} to start round...</h2>
-            {% endif %}
-            {% else %}
-            <h2>Waiting for the start...</h2>
-            {% endif %}
-
+    <div id="gameplay" class="border d-flex justify-content-between align-items-end">
+        <div id="speaker"></div>
+        <div id="speak" class="rounded-pill btn btn-secondary">Speak</div>
+        <p id="word"></p>
+        <p id="count-down"></p>
+        <div id="guesses-container">
+            <div id="guesses" class="d-flex flex-column p-3 gap-3 border"></div>
+            <input class="rounded-pill form-control" id="guess" placeholder="Enter your guess">
         </div>
     </div>
 </div>
-{% if room.user_is_master() %}
-<nav id="sidebar-wrapper">
-    <div id="state-of-running"></div>
-</nav>
-{% endif %}
 {% endblock %}

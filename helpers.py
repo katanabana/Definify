@@ -1,9 +1,10 @@
+import datetime
 import os
 import random
 import string
 from flask import url_for, session
 
-from constants import UPLOAD_FOLDER
+from constants import UPLOAD_FOLDER, NAME
 
 
 def url_for_static(*path):
@@ -32,13 +33,10 @@ def get_params(additional_params=None, **kwargs):
         'url_for_img': url_for_img,
         'url_for_css': url_for_css,
         'url_for_js': url_for_js,
-        'NAME': '<<Game>>'
+        'NAME': NAME
     }
     return {**common_params, **additional_params, **kwargs}
 
-
-def get_random_word():
-    return '<<word>>'
 
 
 def get_random_string(k=20):

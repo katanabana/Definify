@@ -9,7 +9,8 @@ from forms import SignUpForm, SignInForm, EnterRoomForm, NicknameForm
 from helpers import get_params, url_for_img, pfp_exists, get_path_to_pfp, get_extension
 from rooms import Room
 from global_ import rooms
-from constants import APPLICATION_KEY, API_KEY, HOST, PORT, UPLOAD_FOLDER
+from constants import HOST, PORT, UPLOAD_FOLDER
+from keys import APPLICATION_KEY
 from data.db_session import global_init, create_session
 from events import connect_to_events
 from login import configure_login
@@ -46,7 +47,7 @@ def welcome():
             return redirect(enter_room_form.url.data)
 
         elif enter_room_form.validate_on_create():
-            room = Room()
+            room = Room(socketio)
             rooms[room.id] = room
             return redirect(url_for('match', id_=room.id))
 
@@ -80,15 +81,9 @@ def match(id_):
         if nickname_form.validate_on_submit():
             current_user.nickname = nickname_form.nickname.data
         if current_user.nickname:
-            print(rooms[id_].get_all_users())
             return render_template('match.html', **get_params(room=rooms[id_]))
         return render_template('enter_nickname.html', **get_params(nickname_form=nickname_form))
     return render_template('room_not_found.html', **get_params())
-
-
-@app.route('/test')
-def test():
-    print(render_template('test.html', **get_params()))
 
 
 if __name__ == '__main__':

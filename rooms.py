@@ -1,11 +1,13 @@
 import datetime
 import itertools
 import time
+from random import choice
 from threading import Thread
 
 from flask_login import current_user
-from flask_socketio import join_room, emit
+from flask_socketio import join_room, emit, leave_room
 
+from api import get_random_word
 from helpers import *
 
 
@@ -21,79 +23,102 @@ class Team:
         self.name = name
         self.id = get_random_string()
 
-    def add(self):
+    def add_user(self):
         self.members.append(user())
 
     def user_is_in(self):
         return user() in self.members
 
     def remove_user(self):
-        self.members.remove(user())
+        if user() in self.members:
+            self.members.remove(user())
 
     def __iter__(self):
         return self.members.__iter__()
+
+    def __bool__(self):
+        return bool(self.members)
 
 
 class Room:
     @classmethod
     @property
     def event_handlers(cls):
-        return cls.create_team, cls.join, cls.move_to_team, cls.move_to_spectators, cls.start, cls.play, cls.pause
+        return cls.create_team, cls.join, cls.move_to_team, cls.move_to_spectators, cls.start, cls.speak, cls.guess, cls.leave
 
-    def __init__(self):
+    def __init__(self, socketio):
         self.id = get_random_string()
         self.teams = []
         self.started = False
+        self.ended = False
         self.running = False
         self.speaking = False
+        self.stage = None
+        self.speaker = None
+        self.current_team_index = None
         self.spectators = []
         self.master = user()
+        self.socketio = socketio
+        self.word = None
+        self.win_score = 10
+        self.speak_time = 30
 
     def emit(self, event_name, data=()):
         emit(event_name, data, to=self.id)
 
     def create_team(self):
+        for team in self.teams:
+            if team.user_is_in() and len(team.members) == 1:
+                return
+        self.remove_user()
         team = Team(f'Team {len(self.teams) + 1}')
+        team.add_user()
         self.teams.append(team)
-        self.emit('create_team', (team.id, team.name))
+        self.emit('create_team', (current_user.id, team.id, team.name))
 
     def move_to_team(self, team_id):
         for team in self.teams:
+            if team.user_is_in() and team.id == team_id:
+                return
+        self.remove_user()
+        for team in self.teams:
             if team.id == team_id:
-                if user() in self.spectators:
-                    self.spectators.remove(user())
-                team.add()
+                team.add_user()
+                break
         self.emit('move_to_team', (current_user.id, team_id))
 
     def join(self):
         if not self.user_is_in():
-            self.spectators.append(user())
+            new_user = user()
+            new_user.score = 0
             join_room(self.id)
-            self.emit('join', (current_user.id, current_user.nickname, self.user_is_master(), current_user.pfp))
+            join_room(current_user.id)
+            self.emit('join', (current_user.id, current_user.nickname, current_user.pfp))
+            self.spectators.append(new_user)
+
+    def remove_user(self):
+        teams = []
+        for team in self.teams:
+            team.remove_user()
+            if team.members:
+                teams.append(team)
+        if user() in self.spectators:
+            self.spectators.remove(user())
+        self.teams = teams
 
     def move_to_spectators(self):
-        for team in self.teams:
-            if team.user_is_in():
-                team.remove_user()
-                break
         if user() not in self.spectators:
-            self.join()
-        self.emit('move_to_spectators', current_user.get_id())
+            self.remove_user()
+            self.spectators.append(user())
+            self.emit('move_to_spectators', current_user.get_id())
 
     def start(self):
-        self.started = True
-        self.running = True
-        self.emit('start')
-        self.emit('count_down', 90)
-
-    def play(self):
-        self.running = True
-        self.emit('play')
-
-    def pause(self):
-        self.running = False
-        self.emit('pause')
-
+        if self.teams and all(map(lambda team: len(team.members) > 1, self.teams)):
+            self.started = True
+            self.running = True
+            self.current_team_index = 0
+            self.emit('start')
+            self.stage = Waiting(self)
 
     def get_all_users(self):
         return list(itertools.chain(self.spectators, *[team.members for team in self.teams]))
@@ -104,31 +129,107 @@ class Room:
     def user_is_master(self):
         return user() == self.master
 
+    def speak(self):
+        self.stage.next()
 
-class WaitThread(Thread):
+    def next_team(self):
+        self.current_team_index = (self.current_team_index + 1) % len(self.teams)
+
+    def guess(self, guess):
+        if user() in self.teams[self.current_team_index] and user() != self.speaker:
+            correct = guess.strip().lower() == self.word
+            self.emit('guess', (current_user.id, guess, correct))
+            if correct:
+                self.word = get_random_word()
+                self.teams[self.current_team_index].score += 1
+                current_user.score += 1
+                self.speaker.score += 1
+                self.teams[self.current_team_index].score += 2
+                if self.teams[self.current_team_index].score >= self.win_score:
+                    self.ended = True
+                    self.emit('end', self.teams[self.current_team_index].id)
+
+    def leave(self):
+        leave_room(self.id)
+        self.emit('leave', current_user.id)
+        for team in self.teams:
+            if team.user_is_in():
+                team.remove_user()
+                break
+        else:
+            self.spectators.remove(user())
+
+
+class SleepTemporaryThread(Thread):
     def __init__(self, stage):
         def target():
-            time.sleep(stage.time_left)
+            time.sleep(stage.time_left.seconds)
             stage.end()
 
         super().__init__(target=target)
 
 
-class FiniteStage:
-    max_time = datetime.time(minute=1)
+class SleepForeverThread(Thread):
+    def __init__(self, _):
+        def pass_():
+            while True:
+                pass
 
-    def __init__(self):
-        self.time_left = self.max_time
-        self.thread = WaitThread(self)
+        super().__init__(target=pass_)
+
+
+class Stage:
+    next_stage = None
+    thread_type = None
+
+    def __init__(self, room):
+        self.room = room
+        self.thread = self.thread_type(self)
         self.thread.start()
+
+    def next(self):
+        self.room.stage = self.next_stage(self.room)
+
+    def emit(self, event_name, data=()):
+        self.room.socketio.emit(event_name, data, room=self.room.id, namespace='/match/<id_>')
+
+
+class InfiniteStage(Stage):
+    thread_type = SleepForeverThread
+
+
+class FiniteStage(Stage):
+    max_time = datetime.timedelta(seconds=Room(None).speak_time)
+    thread_type = SleepTemporaryThread
+
+    def __init__(self, room):
+        self.time_left = self.max_time
         self.start_time = datetime.datetime.now()
-
-    def stop(self):
-        self.thread.join()
-        self.time_left -= datetime.datetime.now() - self.start_time
-
-    def resume(self):
-        self.thread = WaitThread(self.time_left)
+        super().__init__(room)
+        self.emit('count_down', self.max_time.seconds)
 
     def end(self):
-        self.time_left = None
+        self.next()
+
+
+class Waiting(InfiniteStage):
+    max_time = datetime.timedelta(seconds=5)
+
+    def __init__(self, room):
+        super().__init__(room)
+        self.room.next_team()
+        members = [i for i in self.room.teams[self.room.current_team_index].members if self.room.speaker is None or self.room.speaker != i]
+        self.room.speaker = choice(members)
+        self.emit('wait', room.speaker.id)
+
+
+class Speaking(FiniteStage):
+    def __init__(self, room):
+        super().__init__(room)
+        self.emit('speak')
+        self.room.word = get_random_word()
+        self.room.socketio.emit('update_word', self.room.word, room=self.room.speaker.id, namespace='/match/<id_>')
+
+
+Waiting.next_stage = Speaking
+Speaking.next_stage = Waiting

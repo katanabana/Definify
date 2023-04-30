@@ -15,12 +15,16 @@ class AnonymousUser(AnonymousUserMixin):
         self.nickname = session.get('nickname', '')
         self.id = session.get('id', get_random_string())
         self.pfp = session.get('pfp')
+        self.score = session.get('score')
         if not (self.pfp and pfp_exists(self.pfp)):
             self.pfp = url_for_img('default_pfp.png')
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
         session[key] = value
+
+    def __getattr__(self, item):
+        return session.get(item)
 
     def get_id(self):
         return self.id

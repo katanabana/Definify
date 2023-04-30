@@ -33,7 +33,7 @@ max-content: 50% 50%;
 
 .team {
 flex: 1 1 21%;
-min-width: 21%;
+min-width: 20wh;;
 min-height: 20vh;
 }
 
@@ -128,4 +128,18 @@ padding-left: 1vh;
 .square-btn:hover {
   color: #c2c2d6;
   cursor: pointer;
+}
+
+#start {
+background-image: url('/static/img/play.png');
+background-size: contain;
+background-position: center;
+background-repeat: no-repeat;
+height: 50px;
+width: 50px;
+cursor: pointer;
+}
+
+.border-green {
+border: #8FBC8F solid;
 }
