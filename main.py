@@ -1,30 +1,40 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, send_from_directory
 from flask_login import login_user
-from public import current_user
 
-from data.users import User
-from forms import SignUpForm, SignInForm, EnterRoomForm, NicknameForm
-from helpers import get_params, url_for_img, pfp_exists, get_path_to_pfp, get_extension
-from rooms import Room
-from global_ import rooms
-from constants import HOST, PORT, UPLOAD_FOLDER
-from keys import APPLICATION_KEY
-from data.db_session import global_init, create_session
-from events import connect_to_events
-from login import configure_login
+from body.current import Current
+from body.data.all_models import User
+from body.data.data import Data
+from body.forms import SignUpForm, SignInForm, EnterRoomForm, NicknameForm
+from body.helpers import get_extension, URL
+from body.rooms import Room
+from body.global_ import rooms
+from body.data.db_session import create_session, init_data
+from body.events import connect_to_events
+from body.login import configure_login
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = APPLICATION_KEY
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+load_dotenv()
+app.config['UPLOAD_FOLDER'] = os.getenv('DATA_DIRECTORY')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 socketio = connect_to_events(app)
 configure_login(app)
 
 
+@app.context_processor
+def context():
+    return dict(
+        url_for_css=URL.for_css,
+        url_for_js=URL.for_js,
+        url_for_img=URL.for_img
+    )
+
+
 @app.route('/pfp/<path:filename>')
 def pfp(filename):
-    return send_from_directory(os.path.join(app.config["UPLOAD_FOLDER"], 'pfp'), filename)
+    return send_from_directory(Data.pfp, filename)
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -32,16 +42,16 @@ def welcome():
     enter_room_form = EnterRoomForm()
     if enter_room_form.is_submitted():
 
-        current_user.nickname = enter_room_form.nickname.data
+        Current.user.nickname = enter_room_form.nickname.data
 
         if enter_room_form.validate_on_set_pfp():
-            if current_user.pfp != url_for_img('default_pfp.png') and pfp_exists(current_user.pfp):
-                os.remove(get_path_to_pfp(current_user.pfp))  # remove previous profile picture
+            if Current.user.pfp != url_for_img('default_pfp.png') and pfp_exists(Current.user.pfp):
+                os.remove(get_path_to_pfp(Current.user.pfp))  # remove previous profile picture
             file = enter_room_form.pfp.data
-            filename = current_user.id + '.' + get_extension(file)
+            filename = Current.user.id + '.' + get_extension(file)
             pfp_url = url_for('pfp', filename=filename)
             file.save(get_path_to_pfp(pfp_url))
-            current_user.pfp = pfp_url
+            Current.user.pfp = pfp_url
 
         if enter_room_form.validate_on_join():
             return redirect(enter_room_form.url.data)
@@ -79,13 +89,15 @@ def match(id_):
     if id_ in rooms:
         nickname_form = NicknameForm()
         if nickname_form.validate_on_submit():
-            current_user.nickname = nickname_form.nickname.data
-        if current_user.nickname:
+            Current.user.nickname = nickname_form.nickname.data
+        if Current.user.nickname:
             return render_template('match.html', **get_params(room=rooms[id_]))
         return render_template('enter_nickname.html', **get_params(nickname_form=nickname_form))
     return render_template('room_not_found.html', **get_params())
 
 
 if __name__ == '__main__':
-    global_init('db/database.db')
-    socketio.run(app, HOST, PORT, allow_unsafe_werkzeug=True)
+    init_data()
+    host = os.getenv('HOST')
+    port = int(os.getenv('PORT'))
+    socketio.run(app, host, port, allow_unsafe_werkzeug=True)

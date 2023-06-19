@@ -1,3 +1,6 @@
 flask
 requests
 sqlalchemy
+flask-login
+flask-wtf
+python-dotenv

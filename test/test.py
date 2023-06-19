@@ -1,6 +1,6 @@
 from flask import session
 
-from rooms import Room
+from body.rooms import Room
 
 room = Room()
 

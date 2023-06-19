@@ -1,2 +1,2 @@
-d = {}
-print(d.get(1, 'sdf'))
+A = type('A', (), {'f': 1})
+print(A.f)
