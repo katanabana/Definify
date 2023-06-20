@@ -31,6 +31,6 @@ def init_data():
     SqlAlchemyBase.metadata.create_all(engine)
 
 
-def create_session() -> Session:
+def create_db_session() -> Session:
     global __factory
     return __factory()

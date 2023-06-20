@@ -21,6 +21,10 @@ class URL:
     def for_js(filename):
         return URL.for_static('js', filename)
 
+    @staticmethod
+    def for_pfp(filename):
+        return url_for('pfp', filename=filename)
+
 
 def get_random_string(k=20):
     return ''.join(random.choices(string.ascii_letters, k=k))
@@ -33,3 +37,6 @@ def get_random_color():
 def get_extension(file):
     if '.' in file.filename:
         return file.filename.rsplit('.', 1)[1].lower()
+
+
+post_get = dict(methods=['POST', 'GET'])
