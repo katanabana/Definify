@@ -3,4 +3,5 @@ requests
 sqlalchemy
 flask-login
 flask-wtf
+flask-socketio
 python-dotenv
