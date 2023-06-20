@@ -1,0 +1,68 @@
+GENERAL MODEL
+
+(1.5 + 3.5)	1. receive event				1. <-- create room
+		2. form page:
+			html					2. --> respond with page:
+			room_data										
+	 								
+					
+						    ---------------------------------------------------------------------------------------------------[PC1]
+						    |
+						[server]
+						    |
+						    ---------------------------------------------------------------------------------------------------[PC2]
+
+								3. <-- connect to room
+
+								4. -|2|-
+								
+
+
+ROOM_DATA
+
+1. formed:
+	- When room first created server formes new room_data and sends it with response to create_event.
+	- When a client connects to an existing room: 
+		1) server request room_data from a client who is already connected to room 
+		2) server send received room_data to the client who emmited connect_event
+2. stored:
+	- in a secure way so client can't do following actions:
+		- change it
+		- see it unencrypted
+
+3. changed:
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+THOUGHTS
+
+- can a client see room_data?
+	- if it's encrypted:
+		yes
+	- else:
+		no
+
+- what are possible variants to store room_data on a client side:
+	- session (encrypted cookies)
+	
+
+
+
+TO DO:
+- check a web page for a way to store room_data with browser developer tools. (json file | page code | session ...)
+
+
+
+
