@@ -1,17 +1,18 @@
 import os
+from os.path import isdir
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, send_from_directory
 from flask_login import login_user
 
 from body.current import Current
-from body.data.all_models import User
+from body.data.all_models import RegisteredUser
 from body.data.data import Data
 from body.forms import SignUpForm, SignInForm, EnterRoomForm, NicknameForm
-from body.helpers import get_extension, URL
+from body.helpers import get_extension, URL, post_get
 from body.rooms import Room
 from body.global_ import rooms
-from body.data.db_session import create_session, init_data
+from body.data.db_session import create_db_session, init_data
 from body.events import connect_to_events
 from body.login import configure_login
 
@@ -25,11 +26,7 @@ configure_login(app)
 
 @app.context_processor
 def context():
-    return dict(
-        url_for_css=URL.for_css,
-        url_for_js=URL.for_js,
-        url_for_img=URL.for_img
-    )
+    return dict(URL=URL)
 
 
 @app.route('/pfp/<path:filename>')
@@ -37,7 +34,7 @@ def pfp(filename):
     return send_from_directory(Data.pfp, filename)
 
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/', **post_get)
 def welcome():
     enter_room_form = EnterRoomForm()
     if enter_room_form.is_submitted():
@@ -45,13 +42,11 @@ def welcome():
         Current.user.nickname = enter_room_form.nickname.data
 
         if enter_room_form.validate_on_set_pfp():
-            if Current.user.pfp != url_for_img('default_pfp.png') and pfp_exists(Current.user.pfp):
-                os.remove(get_path_to_pfp(Current.user.pfp))  # remove previous profile picture
+            if Current.user.has_custom_pfp and isdir(Current.user.pfp_url):
+                os.remove(Current.user.pfp_url)  # remove previous profile picture
             file = enter_room_form.pfp.data
-            filename = Current.user.id + '.' + get_extension(file)
-            pfp_url = url_for('pfp', filename=filename)
-            file.save(get_path_to_pfp(pfp_url))
-            Current.user.pfp = pfp_url
+            Current.user.pfp_extension = get_extension(file)
+            file.save(Current.user.pfp_url)
 
         if enter_room_form.validate_on_join():
             return redirect(enter_room_form.url.data)
@@ -84,7 +79,7 @@ def welcome():
     return render_template('welcome.html', **params)
 
 
-@app.route('/match/<id_>', methods=['POST', 'GET'])
+@app.route('/match/<id_>', *post_get)
 def match(id_):
     if id_ in rooms:
         nickname_form = NicknameForm()
