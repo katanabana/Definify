@@ -1,7 +1,7 @@
 GENERAL MODEL
 
 (1.5 + 3.5)	1. receive event				1. <-- create room
-		2. form page:
+		2. respond with page:
 			html					2. --> respond with page:
 			room_data										
 	 								
@@ -24,7 +24,7 @@ ROOM_DATA
 	- When room first created server formes new room_data and sends it with response to create_event.
 	- When a client connects to an existing room: 
 		1) server request room_data from a client who is already connected to room 
-		2) server send received room_data to the client who emmited connect_event
+		2) server sends received room_data to the client who emmited connect_event
 2. stored:
 	- in a secure way so client can't do following actions:
 		- change it
@@ -43,13 +43,11 @@ ROOM_DATA
 
 
 
-
-
-
 THOUGHTS
 
 - can a client see room_data?
 	- if it's encrypted:
+		# client can analyze encrypted string and send modifyied version to server
 		yes
 	- else:
 		no
